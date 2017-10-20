@@ -1,6 +1,12 @@
 import uuid
 from router import Service
 from openbrokerapi.catalog import ServiceMetadata, ServicePlan
+from openbrokerapi.api import (
+    ProvisionedServiceSpec,
+    OperationState,
+    LastOperation,
+    DeprovisionServiceSpec,
+)
 
 
 def gen_uuid(key):
@@ -35,7 +41,7 @@ class ExampleService(Service):
 
         super().__init__(
             id=gen_uuid('my-very-unique-service'),
-            name='exmple-service',
+            name='example-service',
             description='Example Service does nothing',
             bindable=True,
             plans=plans,
@@ -57,8 +63,10 @@ class ExampleService(Service):
         return True  # for now the ServiceBrokerRouter only supports one service
 
     def provision(self, instance_id, service_details, async_allowed):
-        raise NotImplementedError('sorry, not yet implemented')
-        # return ProvisionedServiceSpec()
+        return ProvisionedServiceSpec(
+            is_async=True, dashboard_url=None, operation='create',
+        )
+        # raise NotImplementedError('sorry, not yet implemented')
 
     def bind(self, instance_id, binding_id, details):
         raise NotImplementedError
@@ -72,8 +80,17 @@ class ExampleService(Service):
         raise NotImplementedError
 
     def deprovision(self, instance_id, details, async_allowed):
-        raise NotImplementedError
-        # return DeprovisionServiceSpec()
+        if True:  # async
+            return DeprovisionServiceSpec(True, 'delete')
+        else:
+            return DeprovisionServiceSpec(False)
 
     def last_operation(self, instance_id, operation_data):
-        raise NotImplementedError
+        if operation_data == 'create':
+            # check if creation was successful
+            return LastOperation(OperationState.SUCCEEDED, 'created')
+        elif operation_data == 'delete':
+            # check if deletion was successful
+            return LastOperation(OperationState.SUCCEEDED, 'deleted')
+        else:
+            return LastOperation(OperationState.FAILED, 'failed, no valid operation id found')
