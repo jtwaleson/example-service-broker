@@ -71,8 +71,18 @@ class ExampleService(Service):
         return True  # for now the ServiceBrokerRouter only supports one service
 
     def provision(self, instance_id, service_details, async_allowed):
+        if service_details.parameters is None:
+            service_details.parameters = {}
         key, plan = get_plan_by_id(service_details.plan_id)
-        logging.info('creating plan: {} - {}'.format(key, str(plan)))
+        if key == 'm' and 'hello' not in service_details.parameters:
+            raise Exception('parameter "hello" is required for plan "m"')
+        logging.info(
+            'creating plan: {} - {} - {}'.format(
+                key,
+                str(plan),
+                str(service_details.parameters)
+            )
+        )
         return ProvisionedServiceSpec(
             is_async=True, dashboard_url=None, operation='create',
         )
@@ -81,11 +91,20 @@ class ExampleService(Service):
         # raise NotImplementedError('sorry, not yet implemented')
 
     def bind(self, instance_id, binding_id, details):
+        if details.parameters is None:
+            details.parameters = {}
+
         key, plan = get_plan_by_id(details.plan_id)
         logging.info('binding plan: {} - {}'.format(key, str(plan)))
+
+        if key == 'm' and 'hello' not in details.parameters:
+            raise Exception('parameter "hello" is required to blind plan "m"')
+
         return Binding(
             credentials={
-                'plan_id': details.plan_id,
+                'plan': key,
+                'plan_name': plan.name,
+                'plan_description': plan.description,
                 'parameters': str(details.parameters),
             },
         )
