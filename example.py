@@ -1,11 +1,12 @@
+import uuid
 from router import Service
-from openbrokerapi import ServiceMetadata, ServicePlan
+from openbrokerapi.catalog import ServiceMetadata, ServicePlan
 
 
 def gen_uuid(key):
     # consistently hash the key to a guid
     # users don't have to come up with a guid for all services and plans
-    raise NotImplementedError
+    return str(uuid.uuid5(uuid.NAMESPACE_DNS, key))
 
 
 class ExampleService(Service):
@@ -19,7 +20,9 @@ class ExampleService(Service):
                  metadata=None,
                  free=False,
                  bindable=True,
-            ),
+            )
+        )
+        plans.append(
             ServicePlan(
                  id=gen_uuid('my-unique-plan-sized-s-v0.1'),
                  name='s',
@@ -27,10 +30,10 @@ class ExampleService(Service):
                  metadata=None,
                  free=False,
                  bindable=True,
-            ),
+            )
         )
 
-        super.__init__(
+        super().__init__(
             id=gen_uuid('my-very-unique-service'),
             name='exmple-service',
             description='Example Service does nothing',
@@ -54,7 +57,7 @@ class ExampleService(Service):
         return True  # for now the ServiceBrokerRouter only supports one service
 
     def provision(self, instance_id, service_details, async_allowed):
-        raise NotImplementedError
+        raise NotImplementedError('sorry, not yet implemented')
         # return ProvisionedServiceSpec()
 
     def bind(self, instance_id, binding_id, details):

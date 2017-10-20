@@ -9,7 +9,7 @@ from openbrokerapi.api import (
     BrokerCredentials,
     get_blueprint,
 )
-from openbrokerapi.log_util import log_util
+from openbrokerapi.log_util import basic_config
 
 
 class Service(service_broker.Service):
@@ -50,7 +50,7 @@ class Service(service_broker.Service):
 
 class ServiceBrokerRouter(service_broker.ServiceBroker):
     def __init__(self):
-        super.__init__()
+        super().__init__()
         self.services = []
 
     def register_service(self, service):
@@ -104,13 +104,13 @@ class ServiceBrokerRouter(service_broker.ServiceBroker):
 
 
 def bootstrap(router, credentials, app=None):
-    logger = log_util.basic_config()
+    logger = basic_config()
     if app is None:
         app = Flask(__name__)
     app.register_blueprint(
         get_blueprint(
             router,
-            BrokerCredentials(credentials),
+            BrokerCredentials(*credentials),
             logger,
         )
     )
