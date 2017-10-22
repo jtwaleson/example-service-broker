@@ -1,11 +1,6 @@
 from flask import Flask
 from openbrokerapi import service_broker
 from openbrokerapi.api import (
-    ProvisionedServiceSpec,
-    UpdateServiceSpec,
-    Binding,
-    DeprovisionServiceSpec,
-    LastOperation,
     BrokerCredentials,
     get_blueprint,
 )
@@ -13,9 +8,6 @@ from openbrokerapi.log_util import basic_config
 
 
 class Service(service_broker.Service):
-    def has_instance_id(self, instance_id):
-        raise NotImplementedError
-
     def provision(self, instance_id, service_details, async_allowed):
         raise NotImplementedError
         # return ProvisionedServiceSpec()
@@ -56,18 +48,7 @@ class ServiceBrokerRouter(service_broker.ServiceBroker):
     def register_service(self, service):
         if not isinstance(service, Service):
             raise Exception('service should be of class Service')
-        if len(self.services) > 0:
-            raise NotImplementedError(
-                'support for multiple services is not yet there '
-                'as it requires looking up service instance -> service lookups'
-            )
         self.services.append(service)
-
-    def _get_owning_service(self, instance_id):
-        for service in self.services:
-            if service.has_instance_id(instance_id):
-                return service
-        raise Exception('no owning service found for this instance')
 
     def _get_service_by_id(self, service_id):
         for service in self.services:
@@ -83,23 +64,24 @@ class ServiceBrokerRouter(service_broker.ServiceBroker):
         return service.provision(instance_id, service_details, async_allowed)
 
     def bind(self, instance_id, binding_id, details):
-        service = self._get_owning_service(instance_id)
+        service = self._get_service_by_id(details.service_id)
         return service.bind(instance_id, binding_id, details)
 
     def update(self, instance_id, details, async_allowed):
-        service = self._get_owning_service(instance_id)
+        service = self._get_service_by_id(details.service_id)
         return service.update(instance_id, details, async_allowed)
 
     def unbind(self, instance_id, binding_id, details):
-        service = self._get_owning_service(instance_id)
+        service = self._get_service_by_id(details.service_id)
         service.unbind(instance_id, binding_id, details)
 
     def deprovision(self, instance_id, details, async_allowed):
-        service = self._get_owning_service(instance_id)
+        service = self._get_service_by_id(details.service_id)
         return service.deprovision(instance_id, details, async_allowed)
 
     def last_operation(self, instance_id, operation_data):
-        service = self._get_owning_service(instance_id)
+        raise NotImplementedError("can't map this to the right Service yet")
+        service = None
         return service.last_operation(instance_id, operation_data)
 
 

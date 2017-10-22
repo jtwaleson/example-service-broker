@@ -67,9 +67,6 @@ class ExampleService(Service):
             plan_updateable=True,
         )
 
-    def has_instance_id(self, instance_id):
-        return True  # for now the ServiceBrokerRouter only supports one service
-
     def provision(self, instance_id, service_details, async_allowed):
         if service_details.parameters is None:
             service_details.parameters = {}
