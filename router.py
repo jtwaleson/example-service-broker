@@ -40,6 +40,14 @@ class Service(service_broker.Service):
         # return LastOperation()
 
 
+def _add_service_id(response, service_id):
+    if response.is_async:
+        if response.operation is None:
+            response.operation = service_id
+        else:
+            response.operation = ' '.join((service_id, response.operation))
+
+
 class ServiceBrokerRouter(service_broker.ServiceBroker):
     def __init__(self):
         super().__init__()
@@ -61,7 +69,9 @@ class ServiceBrokerRouter(service_broker.ServiceBroker):
 
     def provision(self, instance_id, details, async_allowed):
         service = self._get_service_by_id(details.service_id)
-        return service.provision(instance_id, details, async_allowed)
+        response = service.provision(instance_id, details, async_allowed)
+        _add_service_id(response, details.service_id)
+        return response
 
     def bind(self, instance_id, binding_id, details):
         service = self._get_service_by_id(details.service_id)
@@ -69,7 +79,9 @@ class ServiceBrokerRouter(service_broker.ServiceBroker):
 
     def update(self, instance_id, details, async_allowed):
         service = self._get_service_by_id(details.service_id)
-        return service.update(instance_id, details, async_allowed)
+        response = service.update(instance_id, details, async_allowed)
+        _add_service_id(response, details.service_id)
+        return response
 
     def unbind(self, instance_id, binding_id, details):
         service = self._get_service_by_id(details.service_id)
@@ -77,11 +89,18 @@ class ServiceBrokerRouter(service_broker.ServiceBroker):
 
     def deprovision(self, instance_id, details, async_allowed):
         service = self._get_service_by_id(details.service_id)
-        return service.deprovision(instance_id, details, async_allowed)
+        response = service.deprovision(instance_id, details, async_allowed)
+        _add_service_id(response, details.service_id)
+        return response
 
     def last_operation(self, instance_id, operation_data):
-        raise NotImplementedError("can't map this to the right Service yet")
-        service = None
+        data = operation_data.split(' ', maxsplit=1)
+        service_id = data[0]
+        if len(data) == 2:
+            operation_data = data[1]
+        else:
+            operation_data = None
+        service = self._get_service_by_id(service_id)
         return service.last_operation(instance_id, operation_data)
 
 
