@@ -59,9 +59,9 @@ class ServiceBrokerRouter(service_broker.ServiceBroker):
     def catalog(self):
         return self.services
 
-    def provision(self, instance_id, service_details, async_allowed):
-        service = self._get_service_by_id(service_details.service_id)
-        return service.provision(instance_id, service_details, async_allowed)
+    def provision(self, instance_id, details, async_allowed):
+        service = self._get_service_by_id(details.service_id)
+        return service.provision(instance_id, details, async_allowed)
 
     def bind(self, instance_id, binding_id, details):
         service = self._get_service_by_id(details.service_id)
