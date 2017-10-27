@@ -2,6 +2,10 @@ import uuid
 from router import Service
 from openbrokerapi.catalog import ServiceMetadata, ServicePlan
 import logging
+import random
+from openbrokerapi.errors import (
+    ErrAsyncRequired,
+)
 from openbrokerapi.api import (
     ProvisionedServiceSpec,
     OperationState,
@@ -68,6 +72,9 @@ class ExampleService(Service):
         )
 
     def provision(self, instance_id, service_details, async_allowed):
+        if not async_allowed:
+            raise ErrAsyncRequired
+
         if service_details.parameters is None:
             service_details.parameters = {}
         key, plan = get_plan_by_id(service_details.plan_id)
@@ -110,19 +117,44 @@ class ExampleService(Service):
         # return Binding()
 
     def update(self, instance_id, details, async_allowed):
-        raise NotImplementedError
-        # cases:
-        # - can not update: plan incompatible
-        # - can not update: backed returned error
-        # - no params: send current status and supported methods??
-        # - success
-        # :raises ErrAsyncRequired: If async is required but not supported
+        if not async_allowed:
+            raise ErrAsyncRequired
+
+        new_key, new_plan = get_plan_by_id(details.plan_id)
+        old_key, old_plan = get_plan_by_id(details.previous_values.plan_id)
+
+        if 'status' in details.parameters:
+            #  If you don't want to build a full-fledged dashboard to manage
+            #  your service, you can use this pattern to return the current
+            #  details. It will throw an error in the cf cli, but
+            status = random.choice(('sleeping', 'walking', 'running', 'sick'))
+            raise Exception(
+                '\n'
+                'status request detected:\n'
+                '- the cat is {}\n'
+                '- it is {} sized'.format(status, old_key)
+            )
+        if new_key == 's' and old_key == 'm':
+            raise Exception(
+                'this cat does not support downgrading'
+            )
+
+        logging.info('upgrading service_instance {} from {} to {}, params {}'.format(
+            instance_id,
+            old_key,
+            new_key,
+            details.parameters,
+        ))
+
         return UpdateServiceSpec(is_async=True, operation='update')
 
     def unbind(self, instance_id, binding_id, details):
         pass
 
     def deprovision(self, instance_id, details, async_allowed):
+        if not async_allowed:
+            raise ErrAsyncRequired
+
         if True:  # async
             return DeprovisionServiceSpec(is_async=True, operation='delete')
         else:
