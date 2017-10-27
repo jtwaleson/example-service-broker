@@ -52,7 +52,7 @@ class ExampleService(Service):
             name='example-service',
             description='Example Service does nothing',
             bindable=True,
-            plans=plans.keys(),
+            plans=plans.values(),
             tags=['example', 'service'],
             requires=None,
             metadata=ServiceMetadata(
